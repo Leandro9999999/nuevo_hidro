@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-
+// import AdminPage from "@/app/pag_admin/page";
 export default function Navbar() {
   const pathname = usePathname();
 
@@ -11,8 +11,7 @@ export default function Navbar() {
   return (
     <nav className="fixed top-0 left-0 w-full bg-black text-white shadow-md z-50">
       <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
-        
-        {/* Logo */}
+
         <Link href="/" className="text-2xl font-bold flex items-center">
           <span className="text-yellow-500">P</span>
           <span className="text-yellow-500">e</span>
@@ -28,8 +27,10 @@ export default function Navbar() {
         <div className="flex items-center space-x-8">
           <div className="hidden md:flex space-x-8">
             <Link href="/" className="hover:text-red-500 transition">Inicio</Link>
-            <a href="/stations" className="hover:text-red-500 transition">Estaciones Servicios</a>
-            <a href="/about" className="hover:text-red-500 transition">¿Quiénes somos?</a>
+            <Link href="/stations" className="hover:text-red-500 transition">Estaciones Servicios</Link>
+            <Link href="/about" className="hover:text-red-500 transition">¿Quiénes somos?</Link>
+            {/* <Link href="/pag_admin" className="hover:text-red-500 transition">AdminPage</Link> */}
+            {/* <Link href="/User_Client" className="hover:text-red-500 transition">cliente</Link> */}
           </div>
 
           {/* Botón para login/registro */}
@@ -40,6 +41,8 @@ export default function Navbar() {
               </button>
             </Link>
           )}
+
+         
         </div>
       </div>
     </nav>

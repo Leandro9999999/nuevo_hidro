@@ -1,52 +1,57 @@
 "use client";
 
 import { useState } from "react";
+import { FieldErrors, useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useAuth } from "../../../contexts/AuthContext";
+import { useRouter } from "next/navigation";
+import { toast } from "react-toastify";
+import {
+  loginSchema,
+  userCreateSchema,
+  Login,
+  UserCreate,
+} from "../../../types";
 
-type FormState = {
-  name: string;
-  email: string;
-  password: string;
-};
-
-export default function Auth() {
-
+export default function AuthPage() {
   const [isLogin, setIsLogin] = useState(true);
-  const [form, setForm] = useState<FormState>({
-    name: "",
-    email: "",
-    password: "",
+  const [loading, setLoading] = useState(false);
+
+  const { login, register } = useAuth();
+  const router = useRouter();
+
+  const {
+    register: registerInput,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<Login | UserCreate>({
+    resolver: zodResolver(isLogin ? loginSchema : userCreateSchema),
   });
 
+  const onSubmit = async (formData: Login | UserCreate) => {
+    setLoading(true);
+    try {
+      if (isLogin) {
+        await login(formData as Login);
+        toast.success("Inicio de sesión exitoso ✅");
+      } else {
+        await register(formData as UserCreate);
+        toast.success("Registro exitoso ✅");
+      }
 
-  const [errors, setErrors] = useState<Partial<FormState>>({});
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-    setErrors({ ...errors, [e.target.name]: "" });
+      router.push("/dashboard");
+    } catch (err: any) {
+      console.error("Error en auth:", err);
+      toast.error(err.message || "Ocurrió un error en la autenticación");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const toggleMode = () => {
     setIsLogin(!isLogin);
-    setErrors({});
-    setForm({ name: "", email: "", password: "" });
-  };
-
-  const validate = (): boolean => {
-    const newErrors: Partial<FormState> = {};
-    if (!isLogin && !form.name.trim()) newErrors.name = "Nombre requerido";
-    if (!form.email.trim()) newErrors.email = "Correo requerido";
-    if (!form.password.trim()) newErrors.password = "Contraseña requerida";
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    if (!validate()) return;
-
-    // Aquí iría la lógica de autenticación o registro
-    console.log(isLogin ? "Login data:" : "Register data:", form);
+    reset();
   };
 
   return (
@@ -56,25 +61,26 @@ export default function Auth() {
           {isLogin ? "Iniciar Sesión" : "Registrarse"}
         </h2>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           {!isLogin && (
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Nombre completo
               </label>
               <input
-                name="name"
                 type="text"
-                value={form.name}
-                onChange={handleChange}
-                className={`w-full px-4 py-2 border rounded-xl text-black bg-white placeholder-gray-400 focus:outline-none focus:ring-2 ${
-                  errors.name
-                    ? "border-red-500 focus:ring-red-500"
-                    : "border-gray-300 focus:ring-red-500"
+                {...registerInput("name")}
+                className={`w-full px-4 py-2 border rounded-xl text-black bg-white ${
+                  (errors as FieldErrors<UserCreate>).name
+                    ? "border-red-500"
+                    : "border-gray-300"
                 }`}
               />
-              {errors.name && (
-                <p className="text-red-600 text-sm mt-1">{errors.name}</p>
+
+              {(errors as FieldErrors<UserCreate>).name && (
+                <p className="text-red-600 text-sm mt-1">
+                  {(errors as FieldErrors<UserCreate>).name?.message}
+                </p>
               )}
             </div>
           )}
@@ -84,18 +90,16 @@ export default function Auth() {
               Correo electrónico
             </label>
             <input
-              name="email"
               type="email"
-              value={form.email}
-              onChange={handleChange}
-              className={`w-full px-4 py-2 border rounded-xl text-black bg-white placeholder-gray-400 focus:outline-none focus:ring-2 ${
-                errors.email
-                  ? "border-red-500 focus:ring-red-500"
-                  : "border-gray-300 focus:ring-red-500"
+              {...registerInput("email")}
+              className={`w-full px-4 py-2 border rounded-xl text-black bg-white ${
+                errors.email ? "border-red-500" : "border-gray-300"
               }`}
             />
             {errors.email && (
-              <p className="text-red-600 text-sm mt-1">{errors.email}</p>
+              <p className="text-red-600 text-sm mt-1">
+                {errors.email.message}
+              </p>
             )}
           </div>
 
@@ -104,26 +108,25 @@ export default function Auth() {
               Contraseña
             </label>
             <input
-              name="password"
               type="password"
-              value={form.password}
-              onChange={handleChange}
-              className={`w-full px-4 py-2 border rounded-xl text-black bg-white placeholder-gray-400 focus:outline-none focus:ring-2 ${
-                errors.password
-                  ? "border-red-500 focus:ring-red-500"
-                  : "border-gray-300 focus:ring-red-500"
+              {...registerInput("password")}
+              className={`w-full px-4 py-2 border rounded-xl text-black bg-white ${
+                errors.password ? "border-red-500" : "border-gray-300"
               }`}
             />
             {errors.password && (
-              <p className="text-red-600 text-sm mt-1">{errors.password}</p>
+              <p className="text-red-600 text-sm mt-1">
+                {errors.password.message}
+              </p>
             )}
           </div>
 
           <button
             type="submit"
-            className="w-full bg-red-600 text-white font-semibold py-2 rounded-xl hover:bg-red-700 transition"
+            disabled={loading}
+            className="w-full bg-red-600 text-white font-semibold py-2 rounded-xl hover:bg-red-700 transition disabled:opacity-50"
           >
-            {isLogin ? "Entrar" : "Crear cuenta"}
+            {loading ? "Procesando..." : isLogin ? "Entrar" : "Crear cuenta"}
           </button>
         </form>
 
