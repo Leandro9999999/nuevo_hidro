@@ -5,11 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect } from "react";
 import { useAuth } from "../../contexts/AuthContext";
-
-function hasPermission(user: { role: string }, roles: string[]): boolean {
-  return roles.includes(user.role);
-}
-
+import { hasPermission } from "../../utils/permissions";
 interface DashboardLayoutProps {
   children: React.ReactNode;
 }
@@ -42,7 +38,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const navigation = [
     { name: "Dashboard", href: "/dashboard", icon: "dashboard" },
     { name: "Estaciones", href: "/dashboard/stations", icon: "stations" },
-    ...(hasPermission(user, ["ADMIN"])
+    ...(hasPermission(user, ["admin"])
       ? [
           { name: "Usuarios", href: "/dashboard/users", icon: "users" },
           { name: "Combustibles", href: "/dashboard/fuel-types", icon: "fuel" },
@@ -55,7 +51,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   return (
     <div className="min-h-screen bg-background">
       {/* Sidebar */}
-      <div className="fixed inset-y-0 left-0 z-50 w-64 bg-sidebar border-r border-sidebar-border">
+      <div className="fixed inset-y-0 left-0 w-64 bg-sidebar border-r border-sidebar-border z-40 pt-16">
         <div className="flex h-16 items-center px-6 border-b border-sidebar-border">
           <Link
             href="/dashboard"
@@ -225,7 +221,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       </div>
 
       {/* Main Content */}
-      <div className="pl-64">
+      <div className="pl-64 pt-16">
         <main className="py-6">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             {children}

@@ -1,88 +1,98 @@
-"use client"
+"use client";
 
-import type React from "react"
+import { useEffect, useState } from "react";
+import DashboardLayout from "@/components/dashboard-layout";
+import { toast } from "react-toastify";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 
-import { useState, useEffect } from "react"
-import { useAuth, hasPermission } from "@/lib/auth"
-import DashboardLayout from "@/components/dashboard-layout"
-import { stationsAPI } from "@/lib/api"
-import { toast } from "react-toastify"
-import Link from "next/link"
-
-interface Station {
-  id_fuel_station: number
-  name: string
-  municipality: string
-  address: string
-  gps_latitude: number
-  gps_longitude: number
-  created_at: string
-}
+import { hasPermission } from "../../../../utils/permissions";
+import { useAuth } from "../../../..//contexts/AuthContext";
+import { stationsAPI } from "../../../..//service/stationsService";
+import type { FuelStation } from "../../../../types";
 
 export default function StationsManagementPage() {
-  const { user } = useAuth()
-  const [stations, setStations] = useState<Station[]>([])
-  const [loading, setLoading] = useState(true)
-  const [search, setSearch] = useState("")
-  const [currentPage, setCurrentPage] = useState(1)
-  const [totalPages, setTotalPages] = useState(1)
+  const { user } = useAuth();
+  const router = useRouter();
 
-  const canManageStations = hasPermission(user, ["ADMIN", "MANAGER"])
+  const [stations, setStations] = useState<FuelStation[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+
+  const canManageStations = hasPermission(user, ["admin", "maanger"]);
+
+  useEffect(() => {
+    if (!user) return;
+    if (!canManageStations) router.push("/dashboard");
+  }, [user, canManageStations, router]);
 
   const fetchStations = async (page = 1, searchTerm = "") => {
-    setLoading(true)
+    setLoading(true);
     try {
-      const response = await stationsAPI.getAll({
+      const { data, total } = await stationsAPI.getAll({
         page,
         limit: 10,
         search: searchTerm,
-      })
-      setStations(response.data.stations || [])
-      setTotalPages(Math.ceil((response.data.total || 0) / 10))
+      });
+
+      setStations(data);
+      setTotalPages(Math.ceil(total / 10));
     } catch (error) {
-      toast.error("Error al cargar las estaciones")
-      setStations([])
+      toast.error("Error al cargar las estaciones");
+      setStations([]);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   useEffect(() => {
-    fetchStations(currentPage, search)
-  }, [currentPage, search])
+    if (canManageStations) {
+      fetchStations(currentPage, search);
+    }
+  }, [currentPage, search, canManageStations]);
 
   const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault()
-    setCurrentPage(1)
-    fetchStations(1, search)
-  }
+    e.preventDefault();
+    setCurrentPage(1);
+    fetchStations(1, search);
+  };
 
   const handleDelete = async (id: number, name: string) => {
-    if (!confirm(`¿Estás seguro de que quieres eliminar la estación "${name}"?`)) {
-      return
+    if (
+      !confirm(`¿Estás seguro de que quieres eliminar la estación "${name}"?`)
+    ) {
+      return;
     }
 
     try {
-      await stationsAPI.delete(id)
-      toast.success("Estación eliminada exitosamente")
-      fetchStations(currentPage, search)
+      await stationsAPI.remove(id);
+      toast.success("Estación eliminada exitosamente");
+      fetchStations(currentPage, search);
     } catch (error) {
-      toast.error("Error al eliminar la estación")
+      toast.error("Error al eliminar la estación");
     }
-  }
+  };
+
+  if (!canManageStations) return null;
 
   return (
     <DashboardLayout>
       <div className="mb-8">
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-2xl font-bold text-foreground">Gestión de Estaciones</h1>
-            <p className="text-muted-foreground">Administra las estaciones de combustible</p>
+            <h1 className="text-2xl font-bold text-foreground">
+              Gestión de Estaciones
+            </h1>
+            <p className="text-muted-foreground">
+              Administra las estaciones de combustible
+            </p>
           </div>
           {canManageStations && (
             <Link
               href="/dashboard/stations/new"
-              className="bg-accent text-accent-foreground px-4 py-2 rounded-md font-medium hover:bg-accent/90 transition-colors"
+              className="bg-red-600 inline-flex items-center gap-2 bg-primary text-white px-5 py-2.5 rounded-md font-semibold shadow hover:bg-red-700 transition-colors duration-200"
             >
               Nueva Estación
             </Link>
@@ -102,7 +112,7 @@ export default function StationsManagementPage() {
           />
           <button
             type="submit"
-            className="bg-secondary text-secondary-foreground px-6 py-2 rounded-md font-medium hover:bg-secondary/90 transition-colors"
+            className="bg-red-600 inline-flex items-center gap-2 bg-primary text-white px-5 py-2.5 rounded-md font-semibold shadow hover:bg-red-700 transition-colors duration-200"
           >
             Buscar
           </button>
@@ -137,52 +147,67 @@ export default function StationsManagementPage() {
             <tbody className="bg-card divide-y divide-border">
               {loading ? (
                 <tr>
-                  <td colSpan={canManageStations ? 5 : 4} className="px-6 py-4 text-center">
+                  <td
+                    colSpan={canManageStations ? 5 : 4}
+                    className="px-6 py-4 text-center"
+                  >
                     <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-accent"></div>
-                    <p className="text-muted-foreground mt-2">Cargando estaciones...</p>
+                    <p className="text-muted-foreground mt-2">
+                      Cargando estaciones...
+                    </p>
                   </td>
                 </tr>
               ) : stations.length === 0 ? (
                 <tr>
-                  <td colSpan={canManageStations ? 5 : 4} className="px-6 py-4 text-center text-muted-foreground">
+                  <td
+                    colSpan={canManageStations ? 5 : 4}
+                    className="px-6 py-4 text-center text-muted-foreground"
+                  >
                     No se encontraron estaciones
                   </td>
                 </tr>
               ) : (
                 stations.map((station) => (
-                  <tr key={station.id_fuel_station} className="hover:bg-muted/50">
+                  <tr key={station.idFuelStation} className="hover:bg-muted/50">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div>
-                        <div className="text-sm font-medium text-card-foreground">{station.name}</div>
-                        <div className="text-sm text-muted-foreground">{station.address}</div>
+                        <div className="text-sm font-medium text-card-foreground">
+                          {station.name}
+                        </div>
+                        <div className="text-sm text-muted-foreground">
+                          {station.address}
+                        </div>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
                       {station.municipality}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
-                      {station.gps_latitude.toFixed(4)}, {station.gps_longitude.toFixed(4)}
+                      {station.gpsLatitude.toFixed(4)},{" "}
+                      {station.gpsLongitude.toFixed(4)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
-                      {new Date(station.created_at).toLocaleDateString()}
+                      {new Date(station.createdAt).toLocaleDateString()}
                     </td>
                     {canManageStations && (
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <div className="flex justify-end space-x-2">
                           <Link
-                            href={`/stations/${station.id_fuel_station}`}
+                            href={`/stations/${station.idFuelStation}`}
                             className="text-accent hover:text-accent/80"
                           >
                             Ver
                           </Link>
                           <Link
-                            href={`/dashboard/stations/${station.id_fuel_station}/edit`}
+                            href={`/dashboard/stations/${station.idFuelStation}/edit`}
                             className="text-blue-600 hover:text-blue-500"
                           >
                             Editar
                           </Link>
                           <button
-                            onClick={() => handleDelete(station.id_fuel_station, station.name)}
+                            onClick={() =>
+                              handleDelete(station.idFuelStation, station.name)
+                            }
                             className="text-destructive hover:text-destructive/80"
                           >
                             Eliminar
@@ -209,7 +234,9 @@ export default function StationsManagementPage() {
                 Anterior
               </button>
               <button
-                onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                onClick={() =>
+                  setCurrentPage(Math.min(totalPages, currentPage + 1))
+                }
                 disabled={currentPage === totalPages}
                 className="ml-3 relative inline-flex items-center px-4 py-2 border border-border text-sm font-medium rounded-md text-muted-foreground bg-background hover:bg-muted disabled:opacity-50"
               >
@@ -233,7 +260,9 @@ export default function StationsManagementPage() {
                     Anterior
                   </button>
                   <button
-                    onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                    onClick={() =>
+                      setCurrentPage(Math.min(totalPages, currentPage + 1))
+                    }
                     disabled={currentPage === totalPages}
                     className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-border bg-background text-sm font-medium text-muted-foreground hover:bg-muted disabled:opacity-50"
                   >
@@ -246,5 +275,5 @@ export default function StationsManagementPage() {
         )}
       </div>
     </DashboardLayout>
-  )
+  );
 }

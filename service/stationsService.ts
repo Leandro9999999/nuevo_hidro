@@ -15,6 +15,8 @@ import { z } from "zod";
 const stationsListResponseSchema = z.object({
   data: z.array(fuelStationResponseSchema),
   total: z.number().int().nonnegative(),
+  page: z.number().int().positive(),
+  pageCount: z.number().int().nonnegative(),
 });
 
 export type StationsListResponse = z.infer<typeof stationsListResponseSchema>;

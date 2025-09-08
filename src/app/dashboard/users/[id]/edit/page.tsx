@@ -30,12 +30,12 @@ export default function EditUserPage() {
   const [loading, setLoading] = useState(true)
   const [stations, setStations] = useState<Station[]>([])
   const [roles] = useState<Role[]>([
-    { id_role: 1, role_name: "ADMIN" },
-    { id_role: 2, role_name: "MANAGER" },
-    { id_role: 3, role_name: "USER" },
+    { id_role: 1, role_name: "admin" },
+    { id_role: 2, role_name: "manager" },
+    { id_role: 3, role_name: "user" },
   ])
 
-  const isAdmin = hasPermission(user, ["ADMIN"])
+  const isAdmin = hasPermission(user, ["admin"])
 
   const form = useForm<UserFormData>({
     resolver: zodResolver(UserSchema.omit({ id_user: true, created_at: true, updated_at: true, password: true })),

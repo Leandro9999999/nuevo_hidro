@@ -6,9 +6,6 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useRouter, useParams } from "next/navigation"
 import { toast } from "react-toastify"
 import DashboardLayout from "@/components/dashboard-layout"
-import { FuelStationSchema, type FuelStation } from "@/lib/schemas"
-import { stationsAPI } from "@/lib/api"
-import { useAuth, hasPermission } from "@/lib/auth"
 
 type StationFormData = Omit<FuelStation, "id_fuel_station" | "created_at" | "updated_at">
 
@@ -19,7 +16,7 @@ export default function EditStationPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [loading, setLoading] = useState(true)
 
-  const canManageStations = hasPermission(user, ["ADMIN", "MANAGER"])
+  const canManageStations = hasPermission(user, ["admin", "maanger"])
 
   const form = useForm<StationFormData>({
     resolver: zodResolver(FuelStationSchema.omit({ id_fuel_station: true, created_at: true, updated_at: true })),

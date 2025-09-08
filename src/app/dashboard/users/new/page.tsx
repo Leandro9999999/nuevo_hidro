@@ -1,55 +1,56 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { useForm } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { useRouter } from "next/navigation"
-import { toast } from "react-toastify"
-import DashboardLayout from "@/components/dashboard-layout"
-import { UserSchema } from "@/lib/schemas"
-import { usersAPI, stationsAPI } from "@/lib/api"
-import { useAuth, hasPermission } from "@/lib/auth"
-import { z } from "zod"
+import { useState, useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useRouter } from "next/navigation";
+import { toast } from "react-toastify";
+import DashboardLayout from "@/components/dashboard-layout";
+import { z } from "zod";
 
-const CreateUserSchema = UserSchema.omit({ id_user: true, created_at: true, updated_at: true })
+const CreateUserSchema = UserSchema.omit({
+  id_user: true,
+  created_at: true,
+  updated_at: true,
+})
   .extend({
     confirmPassword: z.string().min(1, "Confirma la contraseña"),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Las contraseñas no coinciden",
     path: ["confirmPassword"],
-  })
+  });
 
-type CreateUserFormData = z.infer<typeof CreateUserSchema>
+type CreateUserFormData = z.infer<typeof CreateUserSchema>;
 
 interface Station {
-  id_fuel_station: number
-  name: string
+  id_fuel_station: number;
+  name: string;
 }
 
 interface Role {
-  id_role: number
-  role_name: string
+  id_role: number;
+  role_name: string;
 }
 
 export default function NewUserPage() {
-  const { user } = useAuth()
-  const router = useRouter()
-  const [isLoading, setIsLoading] = useState(false)
-  const [stations, setStations] = useState<Station[]>([])
+  const { user } = useAuth();
+  const router = useRouter();
+  const [isLoading, setIsLoading] = useState(false);
+  const [stations, setStations] = useState<Station[]>([]);
   const [roles] = useState<Role[]>([
-    { id_role: 1, role_name: "ADMIN" },
-    { id_role: 2, role_name: "MANAGER" },
-    { id_role: 3, role_name: "USER" },
-  ])
+    { id_role: 1, role_name: "admin" },
+    { id_role: 2, role_name: "manager" },
+    { id_role: 3, role_name: "user" },
+  ]);
 
-  const isAdmin = hasPermission(user, ["ADMIN"])
+  const isAdmin = hasPermission(user, ["admin"]);
 
   useEffect(() => {
     if (user && !isAdmin) {
-      router.push("/dashboard")
+      router.push("/dashboard");
     }
-  }, [user, isAdmin, router])
+  }, [user, isAdmin, router]);
 
   const form = useForm<CreateUserFormData>({
     resolver: zodResolver(CreateUserSchema),
@@ -63,46 +64,48 @@ export default function NewUserPage() {
       id_role: 3, // Default to USER role
       id_fuel_station: undefined,
     },
-  })
+  });
 
   useEffect(() => {
     const fetchStations = async () => {
       try {
-        const response = await stationsAPI.getAll({ limit: 100 })
-        setStations(response.data.stations || [])
+        const response = await stationsAPI.getAll({ limit: 100 });
+        setStations(response.data.stations || []);
       } catch (error) {
-        console.error("Error fetching stations:", error)
+        console.error("Error fetching stations:", error);
       }
-    }
+    };
 
     if (isAdmin) {
-      fetchStations()
+      fetchStations();
     }
-  }, [isAdmin])
+  }, [isAdmin]);
 
   const onSubmit = async (data: CreateUserFormData) => {
-    setIsLoading(true)
+    setIsLoading(true);
     try {
-      const { confirmPassword, ...userData } = data
-      await usersAPI.create(userData)
-      toast.success("Usuario creado exitosamente")
-      router.push("/dashboard/users")
+      const { confirmPassword, ...userData } = data;
+      await usersAPI.create(userData);
+      toast.success("Usuario creado exitosamente");
+      router.push("/dashboard/users");
     } catch (error: any) {
-      toast.error(error.response?.data?.message || "Error al crear el usuario")
+      toast.error(error.response?.data?.message || "Error al crear el usuario");
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   if (!isAdmin) {
-    return null
+    return null;
   }
 
   return (
     <DashboardLayout>
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-foreground">Nuevo Usuario</h1>
-        <p className="text-muted-foreground">Registra un nuevo usuario en el sistema</p>
+        <p className="text-muted-foreground">
+          Registra un nuevo usuario en el sistema
+        </p>
       </div>
 
       <div className="max-w-2xl">
@@ -110,7 +113,9 @@ export default function NewUserPage() {
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-card-foreground mb-2">Nombre</label>
+                <label className="block text-sm font-medium text-card-foreground mb-2">
+                  Nombre
+                </label>
                 <input
                   type="text"
                   {...form.register("name")}
@@ -118,12 +123,16 @@ export default function NewUserPage() {
                   placeholder="Juan"
                 />
                 {form.formState.errors.name && (
-                  <p className="text-destructive text-sm mt-1">{form.formState.errors.name.message}</p>
+                  <p className="text-destructive text-sm mt-1">
+                    {form.formState.errors.name.message}
+                  </p>
                 )}
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-card-foreground mb-2">Apellido</label>
+                <label className="block text-sm font-medium text-card-foreground mb-2">
+                  Apellido
+                </label>
                 <input
                   type="text"
                   {...form.register("last_name")}
@@ -131,13 +140,17 @@ export default function NewUserPage() {
                   placeholder="Pérez"
                 />
                 {form.formState.errors.last_name && (
-                  <p className="text-destructive text-sm mt-1">{form.formState.errors.last_name.message}</p>
+                  <p className="text-destructive text-sm mt-1">
+                    {form.formState.errors.last_name.message}
+                  </p>
                 )}
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-card-foreground mb-2">Email</label>
+              <label className="block text-sm font-medium text-card-foreground mb-2">
+                Email
+              </label>
               <input
                 type="email"
                 {...form.register("email")}
@@ -145,12 +158,16 @@ export default function NewUserPage() {
                 placeholder="juan@ejemplo.com"
               />
               {form.formState.errors.email && (
-                <p className="text-destructive text-sm mt-1">{form.formState.errors.email.message}</p>
+                <p className="text-destructive text-sm mt-1">
+                  {form.formState.errors.email.message}
+                </p>
               )}
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-card-foreground mb-2">Teléfono (Opcional)</label>
+              <label className="block text-sm font-medium text-card-foreground mb-2">
+                Teléfono (Opcional)
+              </label>
               <input
                 type="tel"
                 {...form.register("phone")}
@@ -158,13 +175,17 @@ export default function NewUserPage() {
                 placeholder="+591 70123456"
               />
               {form.formState.errors.phone && (
-                <p className="text-destructive text-sm mt-1">{form.formState.errors.phone.message}</p>
+                <p className="text-destructive text-sm mt-1">
+                  {form.formState.errors.phone.message}
+                </p>
               )}
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-card-foreground mb-2">Contraseña</label>
+                <label className="block text-sm font-medium text-card-foreground mb-2">
+                  Contraseña
+                </label>
                 <input
                   type="password"
                   {...form.register("password")}
@@ -172,12 +193,16 @@ export default function NewUserPage() {
                   placeholder="••••••••"
                 />
                 {form.formState.errors.password && (
-                  <p className="text-destructive text-sm mt-1">{form.formState.errors.password.message}</p>
+                  <p className="text-destructive text-sm mt-1">
+                    {form.formState.errors.password.message}
+                  </p>
                 )}
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-card-foreground mb-2">Confirmar Contraseña</label>
+                <label className="block text-sm font-medium text-card-foreground mb-2">
+                  Confirmar Contraseña
+                </label>
                 <input
                   type="password"
                   {...form.register("confirmPassword")}
@@ -185,13 +210,17 @@ export default function NewUserPage() {
                   placeholder="••••••••"
                 />
                 {form.formState.errors.confirmPassword && (
-                  <p className="text-destructive text-sm mt-1">{form.formState.errors.confirmPassword.message}</p>
+                  <p className="text-destructive text-sm mt-1">
+                    {form.formState.errors.confirmPassword.message}
+                  </p>
                 )}
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-card-foreground mb-2">Rol</label>
+              <label className="block text-sm font-medium text-card-foreground mb-2">
+                Rol
+              </label>
               <select
                 {...form.register("id_role", { valueAsNumber: true })}
                 className="w-full px-3 py-2 bg-input border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring text-foreground"
@@ -203,7 +232,9 @@ export default function NewUserPage() {
                 ))}
               </select>
               {form.formState.errors.id_role && (
-                <p className="text-destructive text-sm mt-1">{form.formState.errors.id_role.message}</p>
+                <p className="text-destructive text-sm mt-1">
+                  {form.formState.errors.id_role.message}
+                </p>
               )}
             </div>
 
@@ -213,19 +244,25 @@ export default function NewUserPage() {
               </label>
               <select
                 {...form.register("id_fuel_station", {
-                  setValueAs: (value) => (value === "" ? undefined : Number(value)),
+                  setValueAs: (value) =>
+                    value === "" ? undefined : Number(value),
                 })}
                 className="w-full px-3 py-2 bg-input border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring text-foreground"
               >
                 <option value="">Sin asignar</option>
                 {stations.map((station) => (
-                  <option key={station.id_fuel_station} value={station.id_fuel_station}>
+                  <option
+                    key={station.id_fuel_station}
+                    value={station.id_fuel_station}
+                  >
                     {station.name}
                   </option>
                 ))}
               </select>
               {form.formState.errors.id_fuel_station && (
-                <p className="text-destructive text-sm mt-1">{form.formState.errors.id_fuel_station.message}</p>
+                <p className="text-destructive text-sm mt-1">
+                  {form.formState.errors.id_fuel_station.message}
+                </p>
               )}
             </div>
 
@@ -249,5 +286,5 @@ export default function NewUserPage() {
         </div>
       </div>
     </DashboardLayout>
-  )
+  );
 }

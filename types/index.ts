@@ -1,9 +1,7 @@
 // src/types/index.ts
 import { z } from "zod";
 
-/* =========================================================
-   FuelStation
-   ========================================================= */
+// FuelStation
 const fuelStationBase = z.object({
   name: z.string().min(2).max(255),
   municipality: z.string().min(2).max(255),
@@ -26,9 +24,7 @@ export type FuelStationCreate = z.infer<typeof fuelStationCreateSchema>;
 export type FuelStationUpdate = z.infer<typeof fuelStationUpdateSchema>;
 export type FuelStation = z.infer<typeof fuelStationResponseSchema>;
 
-/* =========================================================
-   FuelType
-   ========================================================= */
+// FuelType
 const fuelTypeBase = z.object({
   fuelName: z.string().min(2).max(50),
   description: z.string().min(2).max(255),
@@ -46,9 +42,7 @@ export type FuelTypeCreate = z.infer<typeof fuelTypeCreateSchema>;
 export type FuelTypeUpdate = z.infer<typeof fuelTypeUpdateSchema>;
 export type FuelType = z.infer<typeof fuelTypeResponseSchema>;
 
-/* =========================================================
-   FuelAvailability
-   ========================================================= */
+// FuelAvailability
 const fuelAvailabilityBase = z.object({
   availableQuantity: z.coerce.number().nonnegative(),
   idFuelStation: z.number().int().positive(),
@@ -71,9 +65,7 @@ export type FuelAvailabilityUpdate = z.infer<
 >;
 export type FuelAvailability = z.infer<typeof fuelAvailabilityResponseSchema>;
 
-/* =========================================================
-   Role
-   ========================================================= */
+// Role
 const roleBase = z.object({
   roleName: z.string().min(2).max(50),
   description: z.string().max(255).nullable().optional(),
@@ -91,12 +83,10 @@ export type RoleCreate = z.infer<typeof roleCreateSchema>;
 export type RoleUpdate = z.infer<typeof roleUpdateSchema>;
 export type Role = z.infer<typeof roleResponseSchema>;
 
-/* =========================================================
-   User
-   ========================================================= */
+// User
 const userBase = z.object({
   name: z.string().min(2).max(255),
-  lastName: z.string().min(2).max(255).optional(),
+  lastName: z.string().min(2).max(255).nullable().optional(),
   email: z.string().email().max(255),
   password: z.string().min(6).max(255),
   phone: z.string().max(20).nullable().optional(),
@@ -116,9 +106,7 @@ export type UserCreate = z.infer<typeof userCreateSchema>;
 export type UserUpdate = z.infer<typeof userUpdateSchema>;
 export type User = z.infer<typeof userResponseSchema>;
 
-/* =========================================================
-   UserStationNotification
-   ========================================================= */
+// UserStationNotification
 const userStationNotificationBase = z.object({
   subscribed: z.boolean(),
   idUser: z.number().int().positive(),
@@ -145,9 +133,7 @@ export type UserStationNotification = z.infer<
   typeof userStationNotificationResponseSchema
 >;
 
-/* =========================================================
-   StationImage
-   ========================================================= */
+// StationImage
 const stationImageBase = z.object({
   imageUrl: z.string().url().max(255),
   description: z.string().max(255).nullable().optional(),
@@ -166,9 +152,7 @@ export type StationImageCreate = z.infer<typeof stationImageCreateSchema>;
 export type StationImageUpdate = z.infer<typeof stationImageUpdateSchema>;
 export type StationImage = z.infer<typeof stationImageResponseSchema>;
 
-/* =========================================================
-   Login
-   ========================================================= */
+// Login
 export const loginSchema = z.object({
   email: z
     .string()
@@ -186,9 +170,7 @@ export const loginSchema = z.object({
 
 export type Login = z.infer<typeof loginSchema>;
 
-/* =========================================================
-   SessionUser
-   ========================================================= */
+// SessionUser
 export const sessionUserSchema = z.object({
   id: z.number(),
   email: z.string().email(),
@@ -198,15 +180,13 @@ export const sessionUserSchema = z.object({
 });
 export type SessionUser = z.infer<typeof sessionUserSchema>;
 
-/* =========================================================
-   RegisterResponse
-   ========================================================= */
+// RegisterResponse
 export const registerResponseSchema = z.object({
   message: z.string(),
   user: z.object({
     idUser: z.number(),
     name: z.string(),
-    lastName: z.string(),
+    lastName: z.string().nullable().optional(),
     email: z.string().email(),
     phone: z.string().nullable().optional(),
     refreshToken: z.string().nullable().optional(),
@@ -219,9 +199,7 @@ export const registerResponseSchema = z.object({
 });
 export type RegisterResponse = z.infer<typeof registerResponseSchema>;
 
-/* =========================================================
-   LoginResponse
-   ========================================================= */
+// LoginResponse
 export const loginResponseSchema = z.object({
   access_token: z.string(),
   refresh_token: z.string(),

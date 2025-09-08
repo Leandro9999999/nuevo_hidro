@@ -34,10 +34,10 @@ export default function AuthPage() {
     try {
       if (isLogin) {
         await login(formData as Login);
-        toast.success("Inicio de sesión exitoso ✅");
+        toast.success("Inicio de sesión exitoso");
       } else {
         await register(formData as UserCreate);
-        toast.success("Registro exitoso ✅");
+        toast.success("Registro exitoso");
       }
 
       router.push("/dashboard");

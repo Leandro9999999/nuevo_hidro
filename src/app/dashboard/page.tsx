@@ -23,7 +23,7 @@ export default function DashboardPage() {
       try {
         const [stationsResponse, usersResponse] = await Promise.all([
           stationsAPI.getAll({ limit: 1 }),
-          user?.role === "ADMIN"
+          user?.role === "admin"
             ? usersAPI.getAll({ limit: 1 })
             : Promise.resolve({ data: [], total: 0 }),
         ]);
@@ -149,7 +149,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {user?.role === "ADMIN" && (
+        {user?.role === "admin" && (
           <div className="bg-card rounded-lg shadow-sm border border-border p-6">
             <div className="flex items-center">
               <div className="flex-1">
@@ -228,7 +228,7 @@ export default function DashboardPage() {
             >
               Gestionar Estaciones
             </a>
-            {user?.role === "ADMIN" && (
+            {user?.role === "admin" && (
               <>
                 <a
                   href="/dashboard/users"

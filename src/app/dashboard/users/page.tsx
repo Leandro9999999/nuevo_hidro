@@ -1,85 +1,85 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { useAuth, hasPermission } from "@/lib/auth"
-import DashboardLayout from "@/components/dashboard-layout"
-import { usersAPI } from "@/lib/api"
-import { toast } from "react-toastify"
-import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { useState, useEffect } from "react";
+import DashboardLayout from "@/components/dashboard-layout";
+import { toast } from "react-toastify";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 interface User {
-  id_user: number
-  name: string
-  last_name?: string
-  email: string
-  phone?: string
+  id_user: number;
+  name: string;
+  last_name?: string;
+  email: string;
+  phone?: string;
   role: {
-    role_name: "ADMIN" | "MANAGER" | "USER"
-    description?: string
-  }
+    role_name: "admin" | "manager" | "user";
+    description?: string;
+  };
   fuel_station?: {
-    id_fuel_station: number
-    name: string
-  }
-  created_at: string
+    id_fuel_station: number;
+    name: string;
+  };
+  created_at: string;
 }
 
 export default function UsersManagementPage() {
-  const { user } = useAuth()
-  const router = useRouter()
-  const [users, setUsers] = useState<User[]>([])
-  const [loading, setLoading] = useState(true)
-  const [currentPage, setCurrentPage] = useState(1)
-  const [totalPages, setTotalPages] = useState(1)
+  const { user } = useAuth();
+  const router = useRouter();
+  const [users, setUsers] = useState<User[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
 
-  const isAdmin = hasPermission(user, ["ADMIN"])
+  const isAdmin = hasPermission(user, ["admin"]);
 
   useEffect(() => {
     if (user && !isAdmin) {
-      router.push("/dashboard")
+      router.push("/dashboard");
     }
-  }, [user, isAdmin, router])
+  }, [user, isAdmin, router]);
 
   const fetchUsers = async (page = 1) => {
-    setLoading(true)
+    setLoading(true);
     try {
       const response = await usersAPI.getAll({
         page,
         limit: 10,
-      })
-      setUsers(response.data.users || [])
-      setTotalPages(Math.ceil((response.data.total || 0) / 10))
+      });
+      setUsers(response.data.users || []);
+      setTotalPages(Math.ceil((response.data.total || 0) / 10));
     } catch (error) {
-      toast.error("Error al cargar los usuarios")
-      setUsers([])
+      toast.error("Error al cargar los usuarios");
+      setUsers([]);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   useEffect(() => {
     if (isAdmin) {
-      fetchUsers(currentPage)
+      fetchUsers(currentPage);
     }
-  }, [currentPage, isAdmin])
+  }, [currentPage, isAdmin]);
 
   const handleDelete = async (id: number, name: string) => {
-    if (!confirm(`¿Estás seguro de que quieres eliminar al usuario "${name}"?`)) {
-      return
+    if (
+      !confirm(`¿Estás seguro de que quieres eliminar al usuario "${name}"?`)
+    ) {
+      return;
     }
 
     try {
-      await usersAPI.delete(id)
-      toast.success("Usuario eliminado exitosamente")
-      fetchUsers(currentPage)
+      await usersAPI.delete(id);
+      toast.success("Usuario eliminado exitosamente");
+      fetchUsers(currentPage);
     } catch (error) {
-      toast.error("Error al eliminar el usuario")
+      toast.error("Error al eliminar el usuario");
     }
-  }
+  };
 
   if (!isAdmin) {
-    return null
+    return null;
   }
 
   return (
@@ -87,8 +87,12 @@ export default function UsersManagementPage() {
       <div className="mb-8">
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-2xl font-bold text-foreground">Gestión de Usuarios</h1>
-            <p className="text-muted-foreground">Administra los usuarios del sistema</p>
+            <h1 className="text-2xl font-bold text-foreground">
+              Gestión de Usuarios
+            </h1>
+            <p className="text-muted-foreground">
+              Administra los usuarios del sistema
+            </p>
           </div>
           <Link
             href="/dashboard/users/new"
@@ -130,12 +134,17 @@ export default function UsersManagementPage() {
                 <tr>
                   <td colSpan={6} className="px-6 py-4 text-center">
                     <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-accent"></div>
-                    <p className="text-muted-foreground mt-2">Cargando usuarios...</p>
+                    <p className="text-muted-foreground mt-2">
+                      Cargando usuarios...
+                    </p>
                   </td>
                 </tr>
               ) : users.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-4 text-center text-muted-foreground">
+                  <td
+                    colSpan={6}
+                    className="px-6 py-4 text-center text-muted-foreground"
+                  >
                     No se encontraron usuarios
                   </td>
                 </tr>
@@ -147,25 +156,33 @@ export default function UsersManagementPage() {
                         <div className="text-sm font-medium text-card-foreground">
                           {userData.name} {userData.last_name}
                         </div>
-                        {userData.phone && <div className="text-sm text-muted-foreground">{userData.phone}</div>}
+                        {userData.phone && (
+                          <div className="text-sm text-muted-foreground">
+                            {userData.phone}
+                          </div>
+                        )}
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">{userData.email}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
+                      {userData.email}
+                    </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span
                         className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                          userData.role.role_name === "ADMIN"
+                          userData.role.role_name === "admin"
                             ? "bg-red-100 text-red-800"
-                            : userData.role.role_name === "MANAGER"
-                              ? "bg-blue-100 text-blue-800"
-                              : "bg-gray-100 text-gray-800"
+                            : userData.role.role_name === "manager"
+                            ? "bg-blue-100 text-blue-800"
+                            : "bg-gray-100 text-gray-800"
                         }`}
                       >
                         {userData.role.role_name}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
-                      {userData.fuel_station ? userData.fuel_station.name : "No asignada"}
+                      {userData.fuel_station
+                        ? userData.fuel_station.name
+                        : "No asignada"}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
                       {new Date(userData.created_at).toLocaleDateString()}
@@ -180,7 +197,9 @@ export default function UsersManagementPage() {
                         </Link>
                         {userData.id_user !== user?.id_user && (
                           <button
-                            onClick={() => handleDelete(userData.id_user, userData.name)}
+                            onClick={() =>
+                              handleDelete(userData.id_user, userData.name)
+                            }
                             className="text-destructive hover:text-destructive/80"
                           >
                             Eliminar
@@ -207,7 +226,9 @@ export default function UsersManagementPage() {
                 Anterior
               </button>
               <button
-                onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                onClick={() =>
+                  setCurrentPage(Math.min(totalPages, currentPage + 1))
+                }
                 disabled={currentPage === totalPages}
                 className="ml-3 relative inline-flex items-center px-4 py-2 border border-border text-sm font-medium rounded-md text-muted-foreground bg-background hover:bg-muted disabled:opacity-50"
               >
@@ -231,7 +252,9 @@ export default function UsersManagementPage() {
                     Anterior
                   </button>
                   <button
-                    onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                    onClick={() =>
+                      setCurrentPage(Math.min(totalPages, currentPage + 1))
+                    }
                     disabled={currentPage === totalPages}
                     className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-border bg-background text-sm font-medium text-muted-foreground hover:bg-muted disabled:opacity-50"
                   >
@@ -244,5 +267,5 @@ export default function UsersManagementPage() {
         )}
       </div>
     </DashboardLayout>
-  )
+  );
 }

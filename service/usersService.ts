@@ -15,6 +15,8 @@ import { z } from "zod";
 const usersListResponseSchema = z.object({
   data: z.array(userResponseSchema),
   total: z.number().int().nonnegative(),
+  page: z.number().int().positive(),
+  pageCount: z.number().int().nonnegative(),
 });
 
 export type UsersListResponse = z.infer<typeof usersListResponseSchema>;
