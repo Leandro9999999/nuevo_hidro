@@ -40,7 +40,7 @@ export const stationsAPI = {
 
   async update(id: number, payload: FuelStationUpdate): Promise<FuelStation> {
     fuelStationUpdateSchema.parse(payload);
-    const { data } = await api.put(
+    const { data } = await api.patch(
       API_ENDPOINTS.fuelStations.byId(id),
       payload
     );

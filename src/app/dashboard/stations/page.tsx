@@ -92,7 +92,7 @@ export default function StationsManagementPage() {
           {canManageStations && (
             <Link
               href="/dashboard/stations/new"
-              className="bg-red-600 inline-flex items-center gap-2 bg-primary text-white px-5 py-2.5 rounded-md font-semibold shadow hover:bg-red-700 transition-colors duration-200"
+              className="bg-red-600 inline-flex items-center gap-2 text-white px-5 py-2.5 rounded-md font-semibold shadow hover:bg-red-700 transition-colors duration-200"
             >
               Nueva Estación
             </Link>
@@ -112,7 +112,7 @@ export default function StationsManagementPage() {
           />
           <button
             type="submit"
-            className="bg-red-600 inline-flex items-center gap-2 bg-primary text-white px-5 py-2.5 rounded-md font-semibold shadow hover:bg-red-700 transition-colors duration-200"
+            className="bg-red-600 inline-flex items-center gap-2 text-white px-5 py-2.5 rounded-md font-semibold shadow hover:bg-red-700 transition-colors duration-200"
           >
             Buscar
           </button>
@@ -193,7 +193,7 @@ export default function StationsManagementPage() {
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <div className="flex justify-end space-x-2">
                           <Link
-                            href={`/stations/${station.idFuelStation}`}
+                            href={`/dashboard/stations/${station.idFuelStation}`}
                             className="text-accent hover:text-accent/80"
                           >
                             Ver

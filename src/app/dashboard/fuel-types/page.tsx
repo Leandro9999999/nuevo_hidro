@@ -6,7 +6,6 @@ import { toast } from "react-toastify";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-
 import {
   getFuelTypes,
   createFuelType,
@@ -140,7 +139,7 @@ export default function FuelTypesManagementPage() {
           {!showForm && (
             <button
               onClick={() => setShowForm(true)}
-              className="bg-red-600 inline-flex items-center gap-2 bg-primary text-white px-5 py-2.5 rounded-md font-semibold shadow hover:bg-red-700 transition-colors duration-200"
+              className="bg-red-600 inline-flex items-center gap-2 text-white px-5 py-2.5 rounded-md font-semibold shadow hover:bg-red-700 transition-colors duration-200"
             >
               Nuevo Tipo de Combustible
             </button>

@@ -76,7 +76,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       email: data.user.email,
       role: data.user.role,
     };
-    console.log("usario logueado: ", data);
+    //console.log("usario logueado: ", data);
     
     saveSession(data.accessToken, authUser, data.refreshToken, data.expiresIn);
   };

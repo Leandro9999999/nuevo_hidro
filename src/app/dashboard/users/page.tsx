@@ -5,23 +5,10 @@ import DashboardLayout from "@/components/dashboard-layout";
 import { toast } from "react-toastify";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-
-interface User {
-  id_user: number;
-  name: string;
-  last_name?: string;
-  email: string;
-  phone?: string;
-  role: {
-    role_name: "admin" | "manager" | "user";
-    description?: string;
-  };
-  fuel_station?: {
-    id_fuel_station: number;
-    name: string;
-  };
-  created_at: string;
-}
+import { useAuth } from "../../../../contexts/AuthContext";
+import { hasPermission } from "../../../../utils/permissions";
+import { usersAPI } from "../../../../service/usersService";
+import { User } from "../../../../types"; // Importamos el tipo User desde los tipos
 
 export default function UsersManagementPage() {
   const { user } = useAuth();
@@ -33,12 +20,14 @@ export default function UsersManagementPage() {
 
   const isAdmin = hasPermission(user, ["admin"]);
 
+  // Redirigir si el usuario no tiene permisos de administrador
   useEffect(() => {
     if (user && !isAdmin) {
       router.push("/dashboard");
     }
   }, [user, isAdmin, router]);
 
+  // Función para cargar los usuarios paginados
   const fetchUsers = async (page = 1) => {
     setLoading(true);
     try {
@@ -46,8 +35,9 @@ export default function UsersManagementPage() {
         page,
         limit: 10,
       });
-      setUsers(response.data.users || []);
-      setTotalPages(Math.ceil((response.data.total || 0) / 10));
+      // El servicio ya valida y tipa los datos con Zod
+      setUsers(response.data || []);
+      setTotalPages(response.pageCount); // Usamos pageCount del response de la API
     } catch (error) {
       toast.error("Error al cargar los usuarios");
       setUsers([]);
@@ -70,7 +60,7 @@ export default function UsersManagementPage() {
     }
 
     try {
-      await usersAPI.delete(id);
+      await usersAPI.remove(id); // Cambiamos el nombre de la función a 'remove'
       toast.success("Usuario eliminado exitosamente");
       fetchUsers(currentPage);
     } catch (error) {
@@ -150,11 +140,11 @@ export default function UsersManagementPage() {
                 </tr>
               ) : (
                 users.map((userData) => (
-                  <tr key={userData.id_user} className="hover:bg-muted/50">
+                  <tr key={userData.idUser} className="hover:bg-muted/50">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div>
                         <div className="text-sm font-medium text-card-foreground">
-                          {userData.name} {userData.last_name}
+                          {userData.name} {userData.lastName}
                         </div>
                         {userData.phone && (
                           <div className="text-sm text-muted-foreground">
@@ -169,36 +159,40 @@ export default function UsersManagementPage() {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span
                         className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                          userData.role.role_name === "admin"
+                          userData.idRole === 1
                             ? "bg-red-100 text-red-800"
-                            : userData.role.role_name === "manager"
+                            : userData.idRole === 2
                             ? "bg-blue-100 text-blue-800"
                             : "bg-gray-100 text-gray-800"
                         }`}
                       >
-                        {userData.role.role_name}
+                        {
+                          // Se muestra el nombre del rol si existe
+                          userData.role?.roleName || "No especificado"
+                        }
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
-                      {userData.fuel_station
-                        ? userData.fuel_station.name
+                      {userData.idFuelStation
+                        ? userData.idFuelStation
                         : "No asignada"}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
-                      {new Date(userData.created_at).toLocaleDateString()}
+                      {new Date(userData.createdAt).toLocaleDateString()}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <div className="flex justify-end space-x-2">
+                        {/* Se corrige la propiedad id_user a idUser */}
                         <Link
-                          href={`/dashboard/users/${userData.id_user}/edit`}
+                          href={`/dashboard/users/${userData.idUser}/edit`}
                           className="text-blue-600 hover:text-blue-500"
                         >
                           Editar
                         </Link>
-                        {userData.id_user !== user?.id_user && (
+                        {userData.idUser !== user?.id && (
                           <button
                             onClick={() =>
-                              handleDelete(userData.id_user, userData.name)
+                              handleDelete(userData.idUser, userData.name)
                             }
                             className="text-destructive hover:text-destructive/80"
                           >

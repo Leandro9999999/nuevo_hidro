@@ -91,6 +91,7 @@ const userBase = z.object({
   password: z.string().min(6).max(255),
   phone: z.string().max(20).nullable().optional(),
   idRole: z.number().int().positive().optional(),
+  role: roleResponseSchema.optional(),
   idFuelStation: z.number().int().positive().nullable().optional(),
 });
 

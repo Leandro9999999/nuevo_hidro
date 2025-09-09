@@ -12,10 +12,13 @@ import {
   Login,
   UserCreate,
 } from "../../../types";
+import { Eye, EyeOff } from "lucide-react";
 
 export default function AuthPage() {
   const [isLogin, setIsLogin] = useState(true);
   const [loading, setLoading] = useState(false);
+  // Estado para controlar la visibilidad de la contraseña
+  const [showPassword, setShowPassword] = useState(false);
 
   const { login, register } = useAuth();
   const router = useRouter();
@@ -63,26 +66,68 @@ export default function AuthPage() {
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           {!isLogin && (
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Nombre completo
-              </label>
-              <input
-                type="text"
-                {...registerInput("name")}
-                className={`w-full px-4 py-2 border rounded-xl text-black bg-white ${
-                  (errors as FieldErrors<UserCreate>).name
-                    ? "border-red-500"
-                    : "border-gray-300"
-                }`}
-              />
+            <>
+              {/* Nombre, Apellido y Teléfono */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Nombre completo
+                </label>
+                <input
+                  type="text"
+                  {...registerInput("name")}
+                  className={`w-full px-4 py-2 border rounded-xl text-black bg-white ${
+                    (errors as FieldErrors<UserCreate>).name
+                      ? "border-red-500"
+                      : "border-gray-300"
+                  }`}
+                />
 
-              {(errors as FieldErrors<UserCreate>).name && (
-                <p className="text-red-600 text-sm mt-1">
-                  {(errors as FieldErrors<UserCreate>).name?.message}
-                </p>
-              )}
-            </div>
+                {(errors as FieldErrors<UserCreate>).name && (
+                  <p className="text-red-600 text-sm mt-1">
+                    {(errors as FieldErrors<UserCreate>).name?.message}
+                  </p>
+                )}
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Apellido
+                </label>
+                <input
+                  type="text"
+                  {...registerInput("lastName")}
+                  className={`w-full px-4 py-2 border rounded-xl text-black bg-white ${
+                    (errors as FieldErrors<UserCreate>).lastName
+                      ? "border-red-500"
+                      : "border-gray-300"
+                  }`}
+                />
+                {(errors as FieldErrors<UserCreate>).lastName && (
+                  <p className="text-red-600 text-sm mt-1">
+                    {(errors as FieldErrors<UserCreate>).lastName?.message}
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Teléfono (Opcional)
+                </label>
+                <input
+                  type="tel"
+                  {...registerInput("phone")}
+                  className={`w-full px-4 py-2 border rounded-xl text-black bg-white ${
+                    (errors as FieldErrors<UserCreate>).phone
+                      ? "border-red-500"
+                      : "border-gray-300"
+                  }`}
+                />
+                {(errors as FieldErrors<UserCreate>).phone && (
+                  <p className="text-red-600 text-sm mt-1">
+                    {(errors as FieldErrors<UserCreate>).phone?.message}
+                  </p>
+                )}
+              </div>
+            </>
           )}
 
           <div>
@@ -103,17 +148,34 @@ export default function AuthPage() {
             )}
           </div>
 
-          <div>
+          <div className="relative">
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Contraseña
             </label>
-            <input
-              type="password"
-              {...registerInput("password")}
-              className={`w-full px-4 py-2 border rounded-xl text-black bg-white ${
-                errors.password ? "border-red-500" : "border-gray-300"
-              }`}
-            />
+
+            <div className="relative">
+              <input
+                // Cambia el tipo del input basado en el estado `showPassword`
+                type={showPassword ? "text" : "password"}
+                {...registerInput("password")}
+                className={`w-full px-4 py-2 border rounded-xl text-black bg-white ${
+                  errors.password ? "border-red-500" : "border-gray-300"
+                }`}
+              />
+              {/* Botón para alternar la visibilidad */}
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              >
+                {showPassword ? (
+                  <Eye className="h-5 w-5" />
+                ) : (
+                  <EyeOff className="h-5 w-5" />
+                )}
+              </button>
+            </div>
+
             {errors.password && (
               <p className="text-red-600 text-sm mt-1">
                 {errors.password.message}
