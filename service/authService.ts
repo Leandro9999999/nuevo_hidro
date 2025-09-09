@@ -38,6 +38,6 @@ export const loginUser = async (loginData: Login): Promise<LoginResponse> => {
 export const registerUser = async (
   userData: UserCreate
 ): Promise<LoginResponse> => {
-  await api.post(API_ENDPOINTS.users.base, userData);
+  await api.post(API_ENDPOINTS.auth.register, userData);
   return loginUser({ email: userData.email, password: userData.password });
 };

@@ -1,99 +1,106 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { useForm } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { useRouter, useParams } from "next/navigation"
-import { toast } from "react-toastify"
-import DashboardLayout from "@/components/dashboard-layout"
-import { UserSchema } from "@/lib/schemas"
-import { usersAPI, stationsAPI } from "@/lib/api"
-import { useAuth, hasPermission } from "@/lib/auth"
+import { useState, useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useRouter, useParams } from "next/navigation";
+import { toast } from "react-toastify";
+import DashboardLayout from "@/components/dashboard-layout";
+import { useAuth } from "../../../../../../contexts/AuthContext";
+import {
+  FuelStation,
+  Role,
+  userUpdateSchema,
+  UserUpdate,
+} from "../../../../../../types";
+import { usersAPI } from "../../../../../../service/usersService";
+import { hasPermission } from "../../../../../../utils/permissions";
+import { stationsAPI } from "../../../../../../service/stationsService";
+import { rolesAPI } from "../../../../../../service/rolesService";
 
-type UserFormData = Omit<typeof UserSchema._type, "id_user" | "created_at" | "updated_at" | "password">
-
-interface Station {
-  id_fuel_station: number
-  name: string
-}
-
-interface Role {
-  id_role: number
-  role_name: string
-}
+// Usamos el tipo de Zod directamente, omitiendo las propiedades que no se envían
+type UserFormData = UserUpdate;
 
 export default function EditUserPage() {
-  const { user } = useAuth()
-  const router = useRouter()
-  const params = useParams()
-  const [isLoading, setIsLoading] = useState(false)
-  const [loading, setLoading] = useState(true)
-  const [stations, setStations] = useState<Station[]>([])
-  const [roles] = useState<Role[]>([
-    { id_role: 1, role_name: "admin" },
-    { id_role: 2, role_name: "manager" },
-    { id_role: 3, role_name: "user" },
-  ])
+  const { user } = useAuth();
+  const router = useRouter();
+  const params = useParams();
+  const [isLoading, setIsLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [stations, setStations] = useState<FuelStation[]>([]);
+  const [roles, setRoles] = useState<Role[]>([]);
 
-  const isAdmin = hasPermission(user, ["admin"])
+  const isAdmin = hasPermission(user, ["admin"]);
 
+  // Usamos userUpdateSchema en lugar de un esquema no definido (UserSchema)
   const form = useForm<UserFormData>({
-    resolver: zodResolver(UserSchema.omit({ id_user: true, created_at: true, updated_at: true, password: true })),
-  })
+    resolver: zodResolver(userUpdateSchema),
+  });
 
   useEffect(() => {
     if (user && !isAdmin) {
-      router.push("/dashboard")
-      return
+      router.push("/dashboard");
+      return;
     }
 
     const fetchData = async () => {
-      if (!params.id) return
+      if (typeof params.id !== "string") {
+        router.push("/dashboard/users");
+        return;
+      }
+
+      const userId = Number(params.id);
 
       try {
-        const [userResponse, stationsResponse] = await Promise.all([
-          usersAPI.getById(Number(params.id)),
-          stationsAPI.getAll({ limit: 100 }),
-        ])
+        const [userResponse, stationsResponse, rolesResponse] =
+          await Promise.all([
+            usersAPI.getById(userId),
+            stationsAPI.getAll({ limit: 100 }),
+            rolesAPI.getAll(), // Obtener los roles de la API
+          ]);
 
-        const userData = userResponse.data
-        setStations(stationsResponse.data.stations || [])
+        const userData = userResponse; // La respuesta del servicio ya es el objeto de usuario
+        setStations(stationsResponse.data || []);
+        setRoles(rolesResponse || []);
 
+        // El nombre de la propiedad en el formulario debe coincidir con el esquema de Zod (camelCase)
         form.reset({
           name: userData.name,
-          last_name: userData.last_name || "",
+          lastName: userData.lastName,
           email: userData.email,
-          phone: userData.phone || "",
-          id_role: userData.role.id_role,
-          id_fuel_station: userData.fuel_station?.id_fuel_station,
-        })
+          phone: userData.phone,
+          idRole: userData.idRole,
+          idFuelStation: userData.idFuelStation,
+        });
       } catch (error) {
-        toast.error("Error al cargar el usuario")
-        router.push("/dashboard/users")
+        toast.error("Error al cargar los datos del usuario");
+        router.push("/dashboard/users");
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
-    }
+    };
 
     if (user) {
-      fetchData()
+      fetchData();
     }
-  }, [user, isAdmin, params.id, router, form])
+  }, [user, isAdmin, params.id, router, form]);
 
   const onSubmit = async (data: UserFormData) => {
-    if (!params.id) return
+    if (typeof params.id !== "string") return;
 
-    setIsLoading(true)
+    setIsLoading(true);
     try {
-      await usersAPI.update(Number(params.id), data)
-      toast.success("Usuario actualizado exitosamente")
-      router.push("/dashboard/users")
+      await usersAPI.update(Number(params.id), data);
+      toast.success("Usuario actualizado exitosamente");
+      router.push("/dashboard/users");
     } catch (error: any) {
-      toast.error(error.response?.data?.message || "Error al actualizar el usuario")
+      toast.error(
+        error.response?.data?.message || "Error al actualizar el usuario"
+      );
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   if (!isAdmin || loading) {
     return (
@@ -105,7 +112,7 @@ export default function EditUserPage() {
           </div>
         </div>
       </DashboardLayout>
-    )
+    );
   }
 
   return (
@@ -120,7 +127,9 @@ export default function EditUserPage() {
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-card-foreground mb-2">Nombre</label>
+                <label className="block text-sm font-medium text-card-foreground mb-2">
+                  Nombre
+                </label>
                 <input
                   type="text"
                   {...form.register("name")}
@@ -128,26 +137,34 @@ export default function EditUserPage() {
                   placeholder="Juan"
                 />
                 {form.formState.errors.name && (
-                  <p className="text-destructive text-sm mt-1">{form.formState.errors.name.message}</p>
+                  <p className="text-destructive text-sm mt-1">
+                    {form.formState.errors.name.message}
+                  </p>
                 )}
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-card-foreground mb-2">Apellido</label>
+                <label className="block text-sm font-medium text-card-foreground mb-2">
+                  Apellido
+                </label>
                 <input
                   type="text"
-                  {...form.register("last_name")}
+                  {...form.register("lastName")} // Propiedad en camelCase
                   className="w-full px-3 py-2 bg-input border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring text-foreground"
                   placeholder="Pérez"
                 />
-                {form.formState.errors.last_name && (
-                  <p className="text-destructive text-sm mt-1">{form.formState.errors.last_name.message}</p>
+                {form.formState.errors.lastName && (
+                  <p className="text-destructive text-sm mt-1">
+                    {form.formState.errors.lastName.message}
+                  </p>
                 )}
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-card-foreground mb-2">Email</label>
+              <label className="block text-sm font-medium text-card-foreground mb-2">
+                Email
+              </label>
               <input
                 type="email"
                 {...form.register("email")}
@@ -155,12 +172,16 @@ export default function EditUserPage() {
                 placeholder="juan@ejemplo.com"
               />
               {form.formState.errors.email && (
-                <p className="text-destructive text-sm mt-1">{form.formState.errors.email.message}</p>
+                <p className="text-destructive text-sm mt-1">
+                  {form.formState.errors.email.message}
+                </p>
               )}
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-card-foreground mb-2">Teléfono (Opcional)</label>
+              <label className="block text-sm font-medium text-card-foreground mb-2">
+                Teléfono (Opcional)
+              </label>
               <input
                 type="tel"
                 {...form.register("phone")}
@@ -168,24 +189,30 @@ export default function EditUserPage() {
                 placeholder="+591 70123456"
               />
               {form.formState.errors.phone && (
-                <p className="text-destructive text-sm mt-1">{form.formState.errors.phone.message}</p>
+                <p className="text-destructive text-sm mt-1">
+                  {form.formState.errors.phone.message}
+                </p>
               )}
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-card-foreground mb-2">Rol</label>
+              <label className="block text-sm font-medium text-card-foreground mb-2">
+                Rol
+              </label>
               <select
-                {...form.register("id_role", { valueAsNumber: true })}
+                {...form.register("idRole", { valueAsNumber: true })} // Propiedad en camelCase
                 className="w-full px-3 py-2 bg-input border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring text-foreground"
               >
                 {roles.map((role) => (
-                  <option key={role.id_role} value={role.id_role}>
-                    {role.role_name}
+                  <option key={role.idRole} value={role.idRole}>
+                    {role.roleName}
                   </option>
                 ))}
               </select>
-              {form.formState.errors.id_role && (
-                <p className="text-destructive text-sm mt-1">{form.formState.errors.id_role.message}</p>
+              {form.formState.errors.idRole && (
+                <p className="text-destructive text-sm mt-1">
+                  {form.formState.errors.idRole.message}
+                </p>
               )}
             </div>
 
@@ -194,20 +221,27 @@ export default function EditUserPage() {
                 Estación Asignada (Opcional)
               </label>
               <select
-                {...form.register("id_fuel_station", {
-                  setValueAs: (value) => (value === "" ? undefined : Number(value)),
+                {...form.register("idFuelStation", {
+                  // Propiedad en camelCase
+                  setValueAs: (value) =>
+                    value === "" ? undefined : Number(value),
                 })}
                 className="w-full px-3 py-2 bg-input border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring text-foreground"
               >
                 <option value="">Sin asignar</option>
                 {stations.map((station) => (
-                  <option key={station.id_fuel_station} value={station.id_fuel_station}>
+                  <option
+                    key={station.idFuelStation}
+                    value={station.idFuelStation}
+                  >
                     {station.name}
                   </option>
                 ))}
               </select>
-              {form.formState.errors.id_fuel_station && (
-                <p className="text-destructive text-sm mt-1">{form.formState.errors.id_fuel_station.message}</p>
+              {form.formState.errors.idFuelStation && (
+                <p className="text-destructive text-sm mt-1">
+                  {form.formState.errors.idFuelStation.message}
+                </p>
               )}
             </div>
 
@@ -231,5 +265,5 @@ export default function EditUserPage() {
         </div>
       </div>
     </DashboardLayout>
-  )
+  );
 }
