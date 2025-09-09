@@ -1,7 +1,5 @@
 "use client";
 
-import { Fuel, Droplet, Flame, Store } from 'lucide-react';
-import Footer from '@/components/footer';
 
 
 const estaciones = [
@@ -109,7 +107,87 @@ const estaciones = [
     ],
   },
 ];
-export default function stations() {
+
+
+import { Fuel, Droplet, Flame, Store, MapPin } from "lucide-react";
+import Footer from "@/components/footer";
+import { useEffect, useState } from "react";
+import { stationsAPI } from "../../../service/stationsService";
+
+// Interfaces
+interface Combustible {
+  tipo: string;
+  icono: React.ReactNode;
+}
+
+interface FuelStation {
+  id: number;
+  nombre: string;
+  direccion: string;
+  gpsLatitude?: number;
+  gpsLongitude?: number;
+  combustibles?: Combustible[];
+}
+
+// Función para asignar ícono según tipo
+const getIconForFuel = (tipo: string) => {
+  switch (tipo.toLowerCase()) {
+    case "gasolina":
+    case "gasolina especial":
+    case "gasolina premium":
+      return <Fuel className="w-5 h-5 text-red-600" />;
+    case "diésel":
+    case "diésel oil":
+    case "diésel ulsd/uls":
+      return <Droplet className="w-5 h-5 text-yellow-700" />;
+    case "gas natural":
+    case "gas":
+      return <Flame className="w-5 h-5 text-blue-600" />;
+    case "tienda":
+      return <Store className="w-5 h-5 text-purple-700" />;
+    default:
+      return <Fuel className="w-5 h-5 text-gray-500" />;
+  }
+};
+
+export default function Stations() {
+  const [estaciones, setEstaciones] = useState<FuelStation[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedStation, setSelectedStation] = useState<FuelStation | null>(null);
+
+  useEffect(() => {
+    const fetchStationsAndFuelTypes = async () => {
+      try {
+        // Traer estaciones
+        const responseStations = await stationsAPI.getAll({ page: 1 });
+
+        const mappedStations: FuelStation[] = responseStations.data.map((est: any) => ({
+          id: est.idFuelStation,
+          nombre: est.name,
+          direccion: est.address,
+          gpsLatitude: est.gpsLatitude,
+          gpsLongitude: est.gpsLongitude,
+          // Se agregan los combustibles fijos para cada estación
+       combustibles: [
+  { tipo: "Gasolina Especial", icono: getIconForFuel("Gasolina Especial") },
+  { tipo: "Diésel", icono: getIconForFuel("Diésel") },
+  { tipo: "Gas", icono: getIconForFuel("Gas") },
+],
+
+
+        }));
+
+        setEstaciones(mappedStations);
+      } catch (error) {
+        console.error("Error al cargar estaciones o tipos de combustible:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchStationsAndFuelTypes();
+  }, []);
+
   return (
     <>
       <section className="bg-white text-black pt-32 pb-16 px-6 md:px-16">
@@ -181,7 +259,7 @@ export default function stations() {
             </p>
           </div>
         </div>
-              {/* Descripción final */}
+
         <div className="relative mt-16 max-w-5xl mx-auto px-6 text-center">
           <div className="relative z-10 py-20">
             <h4 className="text-5xl font-extrabold mb-4 text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)]">
@@ -194,32 +272,70 @@ export default function stations() {
           </div>
         </div>
 
-        {/* Estaciones de servicio con estilos mejorados */}
+        {/* Estaciones de servicio */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-12">
-          {estaciones.map((estacion, index) => (
-            <div
-              key={index}
-              className="border border-gray-200 p-6 rounded-3xl shadow-md transition-all duration-300 hover:scale-110 hover:bg-gradient-to-r from-gray-100 to-gray-200 hover:shadow-2xl"
-            >
-              <h3 className="text-xl font-semibold text-red-700">{estacion.nombre}</h3>
-              <p className="text-gray-600">{estacion.direccion}</p>
-              <ul className="mt-4 text-lg font-medium space-y-2">
-                {estacion.combustibles.map((combustible, i) => (
-                  <li
-                    key={i}
-                    className="flex items-center space-x-3 border-b border-dashed border-gray-300 pb-2"
+          {loading ? (
+            <p className="text-center text-lg font-semibold text-gray-500 col-span-3">
+              Cargando estaciones...
+            </p>
+          ) : (
+            estaciones.map((estacion) => (
+              <div
+                key={estacion.id}
+                className="border border-gray-200 p-6 rounded-3xl shadow-md transition-all duration-300 hover:scale-110 hover:bg-gradient-to-r from-gray-100 to-gray-200 hover:shadow-2xl"
+              >
+                <h3 className="text-xl font-semibold text-red-700">{estacion.nombre}</h3>
+                <p className="text-gray-600">{estacion.direccion}</p>
+                <ul className="mt-4 text-lg font-medium space-y-2">
+                  {estacion.combustibles?.map((combustible, i) => (
+                    <li
+                      key={i}
+                      className="flex items-center space-x-3 border-b border-dashed border-gray-300 pb-2"
+                    >
+                      {combustible.icono}
+                      <span className="text-green-700 font-semibold">{combustible.tipo}</span>
+                    </li>
+                  ))}
+                </ul>
+
+                {/* Botón para abrir mapa */}
+                {estacion.gpsLatitude && estacion.gpsLongitude && (
+                  <button
+                    onClick={() => setSelectedStation(estacion)}
+                    className="mt-4 w-full flex items-center justify-center gap-2 bg-red-600 text-white font-bold py-2 rounded-xl hover:bg-red-700 transition"
                   >
-                    {combustible.icono}
-                    <span className="text-green-700 font-semibold">{combustible.tipo}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
+                    <MapPin className="w-5 h-5" />
+                    Ver Mapa
+                  </button>
+                )}
+              </div>
+            ))
+          )}
         </div>
+
+        {/* Modal del mapa */}
+        {selectedStation && selectedStation.gpsLatitude && selectedStation.gpsLongitude && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="relative w-full max-w-4xl h-96 bg-white rounded-2xl shadow-md overflow-hidden">
+              <iframe
+                width="100%"
+                height="100%"
+                className="rounded-2xl"
+                frameBorder="0"
+                src={`https://www.google.com/maps?q=${selectedStation.gpsLatitude},${selectedStation.gpsLongitude}&hl=es&z=17&output=embed`}
+                allowFullScreen
+              ></iframe>
+              <button
+                onClick={() => setSelectedStation(null)}
+                className="absolute top-2 right-2 bg-white text-red-600 font-bold px-3 py-1 rounded-lg shadow-md hover:bg-red-50 transition"
+              >
+                Cerrar
+              </button>
+            </div>
+          </div>
+        )}
       </section>
       <Footer />
     </>
   );
 }
-
